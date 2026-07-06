@@ -1,0 +1,15 @@
+<Solution>
+  <Project Path="frontend/frontend.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="WingmanDelivery.AppHost/WingmanDelivery.AppHost.csproj" />
+  <Project Path="WingmanDelivery.BusinessLogic/WingmanDelivery.BusinessLogic.csproj" />
+  <Project Path="WingmanDelivery.Database/WingmanDelivery.Database.sqlproj" Id="3baf85d9-b706-40ba-8fe3-dc5e326e93f0">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="WingmanDelivery.Models/WingmanDelivery.Models.csproj" />
+  <Project Path="WingmanDelivery.Server/WingmanDelivery.Server.csproj" />
+  <Project Path="WingmanDelivery.Tests/WingmanDelivery.Tests.csproj" />
+</Solution>

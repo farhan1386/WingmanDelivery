@@ -1,0 +1,18 @@
+<Project Sdk="Aspire.AppHost.Sdk/13.4.6">
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<UserSecretsId>4193c4c9-0053-4a0c-9248-628b09939fe6</UserSecretsId>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\WingmanDelivery.Server\WingmanDelivery.Server.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Aspire.Hosting.JavaScript" Version="13.4.6" />
+	</ItemGroup>
+</Project>
