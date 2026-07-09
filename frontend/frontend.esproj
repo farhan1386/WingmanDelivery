@@ -3,4 +3,12 @@
     <ShouldRunNpmInstall>false</ShouldRunNpmInstall>
     <ShouldRunBuildScript>false</ShouldRunBuildScript>
   </PropertyGroup>
+  <ItemGroup>
+    <Folder Include="src\features\DeliveryOrderLogs\" />
+    <Folder Include="src\features\Restaurant\" />
+    <Folder Include="src\features\Users\" />
+    <Folder Include="src\features\Roles\" />
+    <Folder Include="src\features\OrderItem\" />
+    <Folder Include="src\features\Orders\" />
+  </ItemGroup>
 </Project>

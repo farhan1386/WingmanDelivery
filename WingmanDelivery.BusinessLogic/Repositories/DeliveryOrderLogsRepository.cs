@@ -15,87 +15,133 @@ namespace WingmanDelivery.BusinessLogic.Repositories
         {
             var sql = $@"
                 SELECT 
-                    Logs.f_uid, Logs.f_iid, Logs.f_delivery_uid, 
-                    Logs.f_status_from, Logs.f_status_to, Logs.f_create_date, Logs.f_create_by
-                FROM [{_schema}].[t_delivery_logs] Logs
-                WHERE Logs.f_delete_date IS NULL";
+                    Logs.f_uid,
+                    Logs.f_iid,
+                    Logs.f_delivery_uid,
+                    Logs.f_status_from,
+                    Logs.f_status_to,
+                    Logs.f_create_date,
+                    Logs.f_create_by
+                FROM 
+                    [{_schema}].[t_delivery_logs] Logs
+                WHERE 
+                    Logs.f_delete_date IS NULL";
 
-            return await _connection.QueryAsync<DeliveryLogsModel>(
-                sql,
-                transaction: _transaction,
-                commandTimeout: _commandTimeout
-            );
+            return await _connection.QueryAsync<DeliveryLogsModel>(sql, transaction: _transaction);
         }
 
         public async Task<DeliveryLogsModel> Find(Guid uid)
         {
             var sql = $@"
                 SELECT 
-                    Logs.f_uid, Logs.f_iid, Logs.f_delivery_uid, 
-                    Logs.f_status_from, Logs.f_status_to, Logs.f_create_date, Logs.f_create_by
-                FROM [{_schema}].[t_delivery_logs] Logs
-                WHERE Logs.f_delete_date IS NULL AND Logs.f_uid = @f_uid";
+                    Logs.f_uid,
+                    Logs.f_iid,
+                    Logs.f_delivery_uid,
+                    Logs.f_status_from,
+                    Logs.f_status_to,
+                    Logs.f_create_date,
+                    Logs.f_create_by
+                FROM 
+                    [{_schema}].[t_delivery_logs] Logs
+                WHERE 
+                    Logs.f_delete_date IS NULL AND 
+                    Logs.f_uid = @f_uid";
 
-            var result = await _connection.QueryFirstOrDefaultAsync<DeliveryLogsModel>(
-                sql,
-                new { f_uid = uid },
-                transaction: _transaction,
-                commandTimeout: _commandTimeout
-            );
-
-            return result ?? throw new KeyNotFoundException($"No transactional audit log matching UID {uid} was found.");
+            return await _connection.QueryFirstOrDefaultAsync<DeliveryLogsModel>(sql, new { f_uid = uid }, transaction: _transaction);
         }
 
         public async Task<GridDataModel<DeliveryLogsModel>> GetExtendedForGrid(FilterModel filter)
         {
             var sql = $@"
-                 WITH LogsCTE AS (
+                 WITH Logs AS (
                         SELECT
-                            Logs.[f_uid], Logs.[f_iid], Logs.[f_delivery_uid], 
-                            Logs.[f_status_from], Logs.[f_status_to], Logs.[f_create_date], 
-                            Logs.[f_create_by], Logs.[f_update_date], Logs.[f_update_by], 
-                            Logs.[f_delete_date], Logs.[f_delete_by]
-                        FROM [{_schema}].[t_delivery_logs] Logs
-                        WHERE Logs.f_delete_date IS NULL
+                            Logs.[f_uid],
+                            Logs.[f_iid],
+                            Logs.[f_delivery_uid],
+                            Logs.[f_status_from],
+                            Logs.[f_status_to],
+                            Logs.[f_create_date],
+                            Logs.[f_create_by],
+                            Logs.[f_update_date],
+                            Logs.[f_update_by],
+                            Logs.[f_delete_date],
+                            Logs.[f_delete_by]
+                        FROM
+                            [{_schema}].[t_delivery_logs] Logs
+                        WHERE
+                            Logs.f_delete_date IS NULL
                     )
-                    SELECT COUNT(*) OVER() AS RowsCount, LogsCTE.* FROM LogsCTE";
 
-            var whereSql = string.Empty;
+                    SELECT 
+                        COUNT(*) OVER() AS RowsCount,
+                        Logs.*
+                    FROM
+                        Logs";
+
+            var whereSql = String.Empty;
             var parameters = new DynamicParameters();
 
-            if (!string.IsNullOrEmpty(filter.FilterString))
+            if (!String.IsNullOrEmpty(filter.FilterString))
             {
                 whereSql += $" WHERE {filter.FilterString}";
             }
 
-            if (!string.IsNullOrEmpty(filter.SearchValue))
+            if (!String.IsNullOrEmpty(filter.SearchValue))
             {
-                whereSql += string.IsNullOrEmpty(whereSql) ? " WHERE " : " AND ";
-                whereSql += @"(
-                    CAST([f_iid] AS NVARCHAR) LIKE @SearchParam OR  
-                    CAST([f_delivery_uid] AS NVARCHAR) LIKE @SearchParam OR 
-                    CAST([f_status_from] AS NVARCHAR) LIKE @SearchParam OR
-                    CAST([f_status_to] AS NVARCHAR) LIKE @SearchParam
+                if (!String.IsNullOrEmpty(whereSql))
+                {
+                    whereSql += " AND ";
+                }
+                else
+                {
+                    whereSql += " WHERE ";
+                }
+
+                whereSql += $@"
+                (
+                    CAST([f_uid] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_iid] AS NVARCHAR(MAX)) LIKE @SearchParam OR 
+                    CAST([f_delivery_uid] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_status_from] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_status_to] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_create_date] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_create_by] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_update_date] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_update_by] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_delete_date] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_delete_by] AS NVARCHAR(MAX)) LIKE @SearchParam
                 )";
+
                 parameters.Add("@SearchParam", $"%{filter.SearchValue}%");
             }
 
             sql += whereSql;
-            sql += !string.IsNullOrEmpty(filter.OrderField) ? $" ORDER BY [{filter.OrderField}] {filter.Order}" : " ORDER BY [f_uid] DESC";
+
+            if (!string.IsNullOrEmpty(filter.OrderField))
+            {
+                var cleanOrderField = filter.OrderField.Replace("[", "").Replace("]", "");
+                var direction = filter.Order?.ToUpper() == "DESC" ? "DESC" : "ASC";
+                sql += $@"
+                        ORDER BY
+            [{cleanOrderField}] {direction}";
+            }
+            else
+            {
+                sql += @"
+                    ORDER BY
+                        [f_uid] DESC";
+            }
 
             if (filter.Take != 0)
             {
-                sql += " OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY";
+                sql += $@"
+                        OFFSET
+                @Skip ROWS FETCH NEXT @Take ROWS ONLY";
                 parameters.Add("@Skip", filter.Skip);
                 parameters.Add("@Take", filter.Take);
             }
 
-            var rows = await _connection.QueryAsync<DeliveryLogsModel>(
-                sql,
-                parameters,
-                transaction: _transaction,
-                commandTimeout: _commandTimeout
-            );
+            var rows = await _connection.QueryAsync<DeliveryLogsModel>(sql, parameters, transaction: _transaction);
 
             return new GridDataModel<DeliveryLogsModel>
             {
@@ -112,16 +158,25 @@ namespace WingmanDelivery.BusinessLogic.Repositories
 
             var sql = $@"
                 INSERT INTO [{_schema}].[t_delivery_logs]
-                (f_uid, f_delivery_uid, f_status_from, f_status_to, f_create_date, f_create_by)
+                (
+                    f_uid,
+                    f_delivery_uid,
+                    f_status_from,
+                    f_status_to,
+                    f_create_date,
+                    f_create_by
+                )
                 VALUES
-                (@f_uid, @f_delivery_uid, @f_status_from, @f_status_to, @f_create_date, @f_create_by)";
+                (
+                    @f_uid,
+                    @f_delivery_uid,
+                    @f_status_from,
+                    @f_status_to,
+                    @f_create_date,
+                    @f_create_by
+                )";
 
-            await _connection.ExecuteAsync(
-                sql,
-                model,
-                transaction: _transaction,
-                commandTimeout: _commandTimeout
-            );
+            await _connection.ExecuteAsync(sql, model, _transaction);
             return model;
         }
 
@@ -131,20 +186,18 @@ namespace WingmanDelivery.BusinessLogic.Repositories
             model.f_update_by = _userUid;
 
             var sql = $@"
-                UPDATE [{_schema}].[t_delivery_logs]
-                SET [f_delivery_uid] = @f_delivery_uid,
+                UPDATE 
+                   [{_schema}].[t_delivery_logs]
+                SET 
+                    [f_delivery_uid] = @f_delivery_uid,
                     [f_status_from] = @f_status_from,
                     [f_status_to] = @f_status_to,
                     [f_update_date] = @f_update_date,
                     [f_update_by] = @f_update_by
-                WHERE [f_uid] = @f_uid";
+                WHERE 
+                    [f_uid] = @f_uid";
 
-            await _connection.ExecuteAsync(
-                sql,
-                model,
-                transaction: _transaction,
-                commandTimeout: _commandTimeout
-            );
+            await _connection.ExecuteAsync(sql, model, _transaction);
             return model;
         }
 
@@ -154,16 +207,15 @@ namespace WingmanDelivery.BusinessLogic.Repositories
             model.f_delete_by = _userUid;
 
             var sql = $@"
-                UPDATE [{_schema}].[t_delivery_logs]
-                SET f_delete_by = @f_delete_by, f_delete_date = @f_delete_date
-                WHERE f_uid = @f_uid";
+                UPDATE 
+                    [{_schema}].[t_delivery_logs]
+                SET
+                    f_delete_by = @f_delete_by,
+                    f_delete_date = @f_delete_date
+                WHERE 
+                    f_uid = @f_uid";
 
-            return await _connection.ExecuteAsync(
-                sql,
-                model,
-                transaction: _transaction,
-                commandTimeout: _commandTimeout
-            );
+            return await _connection.ExecuteAsync(sql, model, _transaction);
         }
     }
 }

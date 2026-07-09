@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using WingmanDelivery.BusinessLogic.Interfaces;
+using WingmanDelivery.BusinessLogic.Services.Interfaces;
 using WingmanDelivery.Models.Enums;
 using WingmanDelivery.Server.Hubs;
 

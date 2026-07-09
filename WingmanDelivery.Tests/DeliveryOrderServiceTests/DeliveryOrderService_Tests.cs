@@ -1,14 +1,10 @@
 ﻿using Moq;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Timers;
 using WingmanDelivery.BusinessLogic.Interfaces;
 using WingmanDelivery.BusinessLogic.Services;
 using WingmanDelivery.BusinessLogic.UnitOfWork;
 using WingmanDelivery.Models;
 using WingmanDelivery.Models.Enums;
-using Xunit;
+using WingmanDelivery.Models.Models;
 
 namespace WingmanDelivery.Tests.DeliveryOrderServiceTests
 {
@@ -24,8 +20,7 @@ namespace WingmanDelivery.Tests.DeliveryOrderServiceTests
             _mockUnitOfWork = new Mock<IUnitOfWork>();
             _mockOrderRepository = new Mock<IDeliveryOrderRepository>();
 
-            // 2. Setup mock return structures for dynamic factory resolutions matching Program.cs
-            _mockUnitOfWork.Setup(u => u.Orders).Returns(_mockOrderRepository.Object);
+            // ❌ FIXED BUG: Removed the invalid _mockUnitOfWork.Setup(u => u.Orders) mapping completely.
 
             var fakeContext = new InvokeDataModel
             {
@@ -35,7 +30,7 @@ namespace WingmanDelivery.Tests.DeliveryOrderServiceTests
             };
             _mockUnitOfWork.Setup(u => u.Data).Returns(fakeContext);
 
-            // 3. Inject our mocks into the production service pipeline target
+            // 2. Inject our mocks into the production service pipeline constructor parameters
             _service = new DeliveryOrderService(_mockOrderRepository.Object, _mockUnitOfWork.Object);
         }
 
@@ -94,12 +89,12 @@ namespace WingmanDelivery.Tests.DeliveryOrderServiceTests
         {
             // Arrange
             var filter = new FilterModel { Skip = 0, Take = 10, SearchValue = "Hub" };
-            var fakeGridResult = new GridDataModel<DeliveryOrderModel>
+            var fakeGridResult = new GridDataModel<DeliveryOrderExtendedModel>
             {
                 Count = 1,
-                Items = new List<DeliveryOrderModel>
+                Items = new List<DeliveryOrderExtendedModel>
                 {
-                    new DeliveryOrderModel { f_pickup_address = "Main Hub Station" }
+                    new DeliveryOrderExtendedModel { f_pickup_address = "Main Hub Station" }
                 }
             };
 

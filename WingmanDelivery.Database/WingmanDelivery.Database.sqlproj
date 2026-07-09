@@ -62,5 +62,13 @@
   <ItemGroup>
     <Build Include="dbo\Tables\t_delivery_orders.sql" />
     <Build Include="dbo\Tables\t_delivery_logs.sql" />
+    <Build Include="dbo\Tables\t_users.sql" />
+    <Build Include="dbo\Tables\t_restaurants.sql" />
+    <Build Include="dbo\Tables\t_payments.sql" />
+    <Build Include="dbo\Tables\t_orders.sql" />
+    <Build Include="dbo\Tables\t_order_items.sql" />
+    <Build Include="dbo\Tables\t_notifications.sql" />
+    <Build Include="dbo\Tables\t_menu_items.sql" />
+    <Build Include="dbo\Tables\t_roles.sql" />
   </ItemGroup>
 </Project>

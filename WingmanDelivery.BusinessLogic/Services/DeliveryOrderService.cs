@@ -1,6 +1,8 @@
 ﻿using WingmanDelivery.BusinessLogic.Interfaces;
+using WingmanDelivery.BusinessLogic.Services.Interfaces;
 using WingmanDelivery.BusinessLogic.UnitOfWork;
 using WingmanDelivery.Models;
+using WingmanDelivery.Models.Models;
 
 namespace WingmanDelivery.BusinessLogic.Services
 {
@@ -29,7 +31,7 @@ namespace WingmanDelivery.BusinessLogic.Services
             return await _deliveryOrderRepository.Find(uid);
         }
 
-        public async Task<GridDataModel<DeliveryOrderModel>> GetDeliveryOrdersForGridAsync(FilterModel filter)
+        public async Task<GridDataModel<DeliveryOrderExtendedModel>> GetDeliveryOrdersForGridAsync(FilterModel filter)
         {
             return await _deliveryOrderRepository.GetExtendedForGrid(filter);
         }

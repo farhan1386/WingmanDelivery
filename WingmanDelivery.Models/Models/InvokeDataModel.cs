@@ -10,8 +10,9 @@ namespace WingmanDelivery.Models
     public class InvokeDataModel
     {
         public Guid userUid { get; set; }
-        public string schema { get; set; }
+        public required string schema { get; set; }
         public int? commandTimeout { get; set; }
+
         [JsonIgnore]
         public IConfiguration? configuration { get; set; }
     }

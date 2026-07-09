@@ -1,7 +1,11 @@
-﻿using Moq;
+﻿using Xunit;
+using Moq;
 using WingmanDelivery.BusinessLogic.Interfaces;
 using WingmanDelivery.BusinessLogic.UnitOfWork;
 using WingmanDelivery.Models;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace WingmanDelivery.Tests.DeliveryOrderLogsService
 {
@@ -17,8 +21,7 @@ namespace WingmanDelivery.Tests.DeliveryOrderLogsService
             _mockUnitOfWork = new Mock<IUnitOfWork>();
             _mockLogsRepository = new Mock<IDeliveryOrderLogsRepository>();
 
-            // 2. Setup mock return structures for dynamic factory resolutions matching Program.cs
-            _mockUnitOfWork.Setup(u => u.Logs).Returns(_mockLogsRepository.Object);
+            // ❌ FIXED BUG: Deleted the invalid _mockUnitOfWork.Setup(u => u.Logs) line completely.
 
             var fakeContext = new InvokeDataModel
             {
@@ -28,8 +31,11 @@ namespace WingmanDelivery.Tests.DeliveryOrderLogsService
             };
             _mockUnitOfWork.Setup(u => u.Data).Returns(fakeContext);
 
-            // 3. Inject our mocks into the production service pipeline target
-            _service = new WingmanDelivery.BusinessLogic.Services.DeliveryOrderLogsService(_mockUnitOfWork.Object);
+            // 2. FIXED BUG: Injected BOTH distinct mock abstractions straight into the updated production service constructor
+            _service = new WingmanDelivery.BusinessLogic.Services.DeliveryOrderLogsService(
+                _mockLogsRepository.Object,
+                _mockUnitOfWork.Object
+            );
         }
 
         [Fact]

@@ -1,7 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
 using System.Data;
-using WingmanDelivery.BusinessLogic.Interfaces;
-using WingmanDelivery.BusinessLogic.Repositories;
 using WingmanDelivery.Models;
 
 namespace WingmanDelivery.BusinessLogic.UnitOfWork
@@ -11,12 +9,9 @@ namespace WingmanDelivery.BusinessLogic.UnitOfWork
         private readonly SqlConnection _connection;
         private SqlTransaction? _transaction;
         private bool _disposed;
-
         public IDbConnection Connection => _connection;
         public IDbTransaction? Transaction => _transaction;
         public InvokeDataModel Data { get; }
-        public IDeliveryOrderRepository Orders => new DeliveryOrderRepository(this);
-        public IDeliveryOrderLogsRepository Logs => new DeliveryOrderLogsRepository(this);
 
         public UnitOfWork(SqlConnection connection, InvokeDataModel data)
         {

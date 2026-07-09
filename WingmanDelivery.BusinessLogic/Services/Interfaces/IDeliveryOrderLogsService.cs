@@ -1,6 +1,6 @@
 ﻿using WingmanDelivery.Models;
 
-namespace WingmanDelivery.BusinessLogic.Interfaces
+namespace WingmanDelivery.BusinessLogic.Services.Interfaces
 {
     public interface IDeliveryOrderLogsService
     {

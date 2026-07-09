@@ -2,6 +2,7 @@
 using WingmanDelivery.BusinessLogic.Interfaces;
 using WingmanDelivery.BusinessLogic.UnitOfWork;
 using WingmanDelivery.Models;
+using WingmanDelivery.Models.Models;
 
 namespace WingmanDelivery.BusinessLogic.Repositories
 {
@@ -50,11 +51,10 @@ namespace WingmanDelivery.BusinessLogic.Repositories
             return await _connection.QueryFirstOrDefaultAsync<DeliveryOrderModel>(sql, new { f_uid = uid }, transaction: _transaction);
         }
 
-        public async Task<GridDataModel<DeliveryOrderModel>> GetExtendedForGrid(FilterModel filter)
+        public async Task<GridDataModel<DeliveryOrderExtendedModel>> GetExtendedForGrid(FilterModel filter)
         {
-            // Use CTE to wrap base fields cleanly
             var sql = $@"
-                 WITH OrdersCTE AS (
+                 WITH Orders AS (
                         SELECT
                             Orders.[f_uid],
                             Orders.[f_iid],
@@ -75,29 +75,42 @@ namespace WingmanDelivery.BusinessLogic.Repositories
 
                     SELECT 
                         COUNT(*) OVER() AS RowsCount,
-                        OrdersCTE.*
+                        Orders.*
                     FROM
-                        OrdersCTE";
+                        Orders";
 
-            var whereSql = string.Empty;
+            var whereSql = String.Empty;
             var parameters = new DynamicParameters();
 
-            // 1. Dynamic raw where strings (Ensure structural security boundaries)
-            if (!string.IsNullOrEmpty(filter.FilterString))
+            if (!String.IsNullOrEmpty(filter.FilterString))
             {
                 whereSql += $" WHERE {filter.FilterString}";
             }
 
-            // 2. SAFE PARAMETERIZED SEARCH: Fixes SQL injections from string interpolation
-            if (!string.IsNullOrEmpty(filter.SearchValue))
+            if (!String.IsNullOrEmpty(filter.SearchValue))
             {
-                whereSql += string.IsNullOrEmpty(whereSql) ? " WHERE " : " AND ";
+                if (!String.IsNullOrEmpty(whereSql))
+                {
+                    whereSql += " AND ";
+                }
+                else
+                {
+                    whereSql += " WHERE ";
+                }
 
-                whereSql += @"
+                whereSql += $@"
                 (
-                    CAST([f_iid] AS NVARCHAR) LIKE @SearchParam OR  
-                    [f_pickup_address] LIKE @SearchParam OR 
-                    CAST([f_status] AS NVARCHAR) LIKE @SearchParam
+                    CAST([f_uid] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_iid] AS NVARCHAR(MAX)) LIKE @SearchParam OR 
+                    [f_pickup_address] LIKE @SearchParam OR
+                    CAST([f_status] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_total_cost] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_create_date] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_create_by] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_update_date] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_update_by] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_delete_date] AS NVARCHAR(MAX)) LIKE @SearchParam OR
+                    CAST([f_delete_by] AS NVARCHAR(MAX)) LIKE @SearchParam
                 )";
 
                 parameters.Add("@SearchParam", $"%{filter.SearchValue}%");
@@ -105,27 +118,33 @@ namespace WingmanDelivery.BusinessLogic.Repositories
 
             sql += whereSql;
 
-            // Apply dynamic sorting safely against structural fields
             if (!string.IsNullOrEmpty(filter.OrderField))
             {
-                sql += $" ORDER BY [{filter.OrderField}] {filter.Order}";
+                var cleanOrderField = filter.OrderField.Replace("[", "").Replace("]", "");
+                var direction = filter.Order?.ToUpper() == "DESC" ? "DESC" : "ASC";
+                sql += $@"
+                        ORDER BY
+            [{cleanOrderField}] {direction}";
             }
             else
             {
-                sql += " ORDER BY [f_uid] DESC";
+                sql += @"
+                    ORDER BY
+                        [f_uid] DESC";
             }
 
-            // Apply MS SQL server data pagination variables safely
             if (filter.Take != 0)
             {
-                sql += " OFFSET @Skip ROWS FETCH NEXT @Take ROWS ONLY";
+                sql += $@"
+                        OFFSET
+                @Skip ROWS FETCH NEXT @Take ROWS ONLY";
                 parameters.Add("@Skip", filter.Skip);
                 parameters.Add("@Take", filter.Take);
             }
 
-            var rows = await _connection.QueryAsync<DeliveryOrderModel>(sql, parameters, transaction: _transaction);
+            var rows = await _connection.QueryAsync<DeliveryOrderExtendedModel>(sql, parameters, transaction: _transaction);
 
-            return new GridDataModel<DeliveryOrderModel>
+            return new GridDataModel<DeliveryOrderExtendedModel>
             {
                 Count = rows.FirstOrDefault()?.RowsCount ?? 0,
                 Items = rows
